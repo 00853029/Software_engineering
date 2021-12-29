@@ -126,7 +126,7 @@
                                             <th>金額</th>
                                         </tr>
                                         </thead>
-                                        <tbody>
+                                        <tbody id="order_history">
                                         <tr>
                                             <!-- <td>01</td>
                                             <td>12:00</td>
@@ -219,7 +219,7 @@
 	
 	
 	<script>
-        var User_test = "22222";
+        var User_test = "evan";
         function showOrderList_ing(){
             const xmlhttp = new XMLHttpRequest();
             xmlhttp.onload = function() {
@@ -237,6 +237,25 @@
                 }
             }
 			xmlhttp.open("GET", "php/user_order_ing.php?user_account=" + User_test);
+            xmlhttp.send(); 
+        }
+        function showOrderList_history(){
+            const xmlhttp = new XMLHttpRequest();
+            xmlhttp.onload = function() {
+                var obj = this.responseText;
+                console.log(obj);
+				obj = obj.substring(11,obj.length);
+				var orderObj = JSON.parse(obj);
+                console.log(orderObj);
+                document.getElementById("order_history").innerHTML = "";
+                var index = 0;
+                while(orderObj[index] != null){
+                    var time = orderObj[index].T_stamp.substring(0,orderObj[index].T_stamp.length-5);
+                    document.getElementById("order_history").innerHTML +=" <tr><td>"+(index)+"</td><td>"+time+"</td><td>"+orderObj[index].product_list+"</td><td>暫無</td><td>"+orderObj[index].cost+"</td></tr>";
+                    index++;
+                }
+            }
+			xmlhttp.open("GET", "php/user_history_order.php?user_account=" + User_test);
             xmlhttp.send(); 
         }
         function showCoupon(){
@@ -257,6 +276,7 @@
 		}
         function start(){
             showOrderList_ing();
+            showOrderList_history();
             showCoupon();
         }
         window.addEventListener("load", start, false);
