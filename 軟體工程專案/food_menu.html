@@ -6,7 +6,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>瀏覽菜單&即時點餐</title>
+    <title>FBL早餐店(Customer)</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">    
 	<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
@@ -25,9 +25,13 @@
     <style>
 
     	body {font-family: 微軟正黑體;}
-		.left {}
-		.right{
-			text-align: right;
+		button {
+			text-align: center;
+			transition-duration: 0.4s;
+			text-decoration: none;
+		}
+		.del_button {
+			font-size: 1pt;
 		}
     </style>
   </head>
@@ -93,6 +97,7 @@
 							<!-- <button type="submit" class="btn btn-default" onclick="searching_function(this.value)">搜尋</button> -->
 						</form>
 						<h1 style="font-family:微軟正黑體 ; text-align:center">ღMenuღ</h1>
+
 					</div>
 					
 					<!-- <div align="center"><img src="demo.png" width="80%" class="img-thumbnail"></div> -->
@@ -155,7 +160,7 @@
 						
 						<div class="panel-body">
 							<ul id="coupon_code_id">
-								<li>優惠卷1<span style="float: right;">-30$</span></li>
+								<li>優惠卷code: <span style="float: right;">-30$</span></li>
 							</ul>
 						</div>	
 					</div>
@@ -208,6 +213,7 @@
 		var searching_str = '';
 		var product_name_Array = {};
 		var coupon_code = "";
+		var p_id = "";
         function showMenu() {
             const xmlhttp = new XMLHttpRequest();
             
@@ -300,13 +306,14 @@
 				document.getElementById("package").innerHTML = '';
 				//display remain product
 				var index = 0;
-
+				showPackageSum();
                 while(package_obj[index].product_name != null){
-                    document.getElementById("package").innerHTML += '<li>'+ package_obj[index].product_name +': <span style="float: right;">'+ package_obj[index].product_price +' $</span></li>';
+
+                    document.getElementById("package").innerHTML += '<li>'+ package_obj[index].product_name +': <span style="float: right;">'+ package_obj[index].product_price +' $<button id="'+ package_obj[index].product_name +'" onclick="delete_package_product(this.id)" class="del_button" >X</button></span></li>';
 					index++;
 				}
 				//console.log(coupon_code);
-				showPackageSum();
+				
             }
             
 			xmlhttp.open("GET", "php/display_package.php?q=" + User_test);
@@ -326,7 +333,30 @@
             	//xmlhttp.responseType = 'json';
             xmlhttp.send(); 
 		}
-		
+		function addToPackage(button_index){
+			product_name_to_id(product_name_Array[button_index]);
+			//console.log("addfunc_id:" + p_id );
+			const xmlhttp = new XMLHttpRequest();
+            xmlhttp.onload = function() {
+				//console.log(product_name_Array[button_index]);
+				showPackage();
+				//window.location.reload();
+			}
+			xmlhttp.open("GET", "php/add_to_Package.php?user_account="+ User_test +"&product_id=" + p_id);
+            xmlhttp.send(); 
+			
+		}
+		function delete_package_product(del_product_name){
+			product_name_to_id(del_product_name);
+			console.log("del_pid:" + p_id);
+			const xmlhttp = new XMLHttpRequest();
+            xmlhttp.onload = function() {
+				console.log("deleteFunc: "+this.responseText);
+				//window.location.reload();
+			}
+			xmlhttp.open("GET", "php/delete_package_product.php?user_account=" + User_test +"&product_id=" + p_id);
+            xmlhttp.send(); 
+		}
 		function searching_function(str){
 			searching_str = str;
 			if (str.length == 0) {
@@ -363,15 +393,20 @@
             	//xmlhttp.responseType = 'json';
             xmlhttp.send(); 
 		}
-		function addToPackage(button_index){
+		
+		function product_name_to_id(name_str){	//return 的地方有問題
+			
 			const xmlhttp = new XMLHttpRequest();
             xmlhttp.onload = function() {
-				console.log(product_name_Array[button_index]);
-				showPackage();
+				console.log(name_str);
+				p_id = this.responseText;
+				p_id = p_id.substring(22,p_id.length);
+				console.log("onload:" + p_id);
+				
 			}
-			xmlhttp.open("GET", "php/add_to_Package.php?user_account="+ User_test +"&product_id=" + product_name_Array[button_index]);
+			xmlhttp.open("GET", "php/check_id.php?product_name=" + name_str);
             xmlhttp.send(); 
-			
+			console.log("p_id= " + p_id);
 		}
 		function checkOut(){
 			var timestamp = Date.now();
@@ -397,21 +432,24 @@
 			const xmlhttp = new XMLHttpRequest();
             xmlhttp.onload = function() {
 				var obj = this.responseText;
+				
 				obj = obj.substring(11,obj.length);
+				console.log(obj);
 				var coupon_info = JSON.parse(obj);
+				console.log(coupon_info);
 				var index;
 				while(coupon_info[index] != null){
-					document.getElementById("coupon_code_id").innerHTML += "<li>"+coupon_info[index].code+"<span style='float: right;'>"+coupon_info[index].discount+"$</span></li>";
+					document.getElementById("coupon_code_id").innerHTML += "<li>"+coupon_info[index].coupon_code+"<span style='float: right;'>"+coupon_info[index].num+"$</span></li>";
 				}
 				//console.log(product_name_Array[button_index]);
 			}
-			xmlhttp.open("GET", "php/display_coupon.php");
+			xmlhttp.open("GET", "php/show_coupon.php");
             xmlhttp.send(); 
 		}
 		function use_coupon(coupon_str){
 			//console.log(coupon_str);
 			coupon_code = coupon_str;
-			//console.log(coupon_code);
+			console.log(coupon_code);
 			showPackage();
 		}
         function start(){
